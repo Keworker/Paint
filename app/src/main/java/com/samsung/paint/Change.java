@@ -117,4 +117,21 @@ public class Change extends Activity
     public void onStopTrackingTouch(SeekBar seekBar) {
 
     }
+
+    public static class Example extends View {
+        public static Paint paint;
+
+        public Example(Context context) {
+            super(context);
+            paint = new Paint();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            paint.setARGB(Change.alphaValue, Change.redValue, Change.greenValue, Change.blueValue);
+            canvas.drawCircle(MainActivity.screenWidth / 2, MainActivity.screenWidth / 4,
+                    MainActivity.screenWidth / 4, paint);
+            super.onDraw(canvas);
+        }
+    }
 }
