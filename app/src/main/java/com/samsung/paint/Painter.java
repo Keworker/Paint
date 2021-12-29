@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,11 +21,12 @@ public class Painter extends View  {
     double wight, height;
     static double side;
     static boolean flag = false, line = false;
-    static Paint paint;
+    static Paint paint, eraser;
     static int brushMode = 0;
     Bitmap bitmapChange, bitmapCircle, bitmapRect, bitmapTriangle, bitmapEye;
     Actor change, circle, rect, triangle, eye;
     List<Line> lines = new ArrayList<>();
+    List<Point> points = new ArrayList<>();
 
     public Painter(Context context) {
         super(context);
@@ -66,6 +68,9 @@ public class Painter extends View  {
                 canvas.drawLine(lines.get(i).x1, lines.get(i).y1,
                         lines.get(i).x2, lines.get(i).y2, paint);
                 Log.d("My", "Нарисовал");
+            }
+            for (int i = 0; i < points.size(); i++) {
+                canvas.drawPoint((float) points.get(i).x, (float) points.get(i).y, paint);
             }
             canvas.drawBitmap(bitmapChange, 0, 0, paint);
             canvas.drawBitmap(bitmapCircle, (int) side, 0, paint);
@@ -120,6 +125,9 @@ public class Painter extends View  {
                     }
                 }
                 break;
+            }
+            case MotionEvent.ACTION_MOVE:{
+                points.add(new Point((int) event.getX(), (int) event.getY()));
             }
             case MotionEvent.ACTION_UP:{
                 if (line) {

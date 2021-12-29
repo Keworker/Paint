@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioGroup;
@@ -27,6 +28,7 @@ public class Change extends Activity
             alphaPercent = 100;
     Example example;
     RadioGroup radio;
+    Canvas canvas = new Canvas();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,11 +103,12 @@ public class Change extends Activity
             }
             case R.id.alpha:{
                 alphaPercent = alpha.getProgress();
-                alphaValue = alphaValue * 255 / 100;
+                alphaValue = alphaPercent * 255 / 100;
                 Painter.paint.setARGB(alphaValue, redValue, greenValue, blueValue);
                 break;
             }
         }
+        example.paint.setARGB(alphaValue, redValue, greenValue, blueValue);
     }
 
     @Override
@@ -121,13 +124,13 @@ public class Change extends Activity
     public static class Example extends View {
         public static Paint paint;
 
-        public Example(Context context) {
-            super(context);
+        public Example(Context context, AttributeSet attributeSet) {
+            super(context, attributeSet);
             paint = new Paint();
         }
 
         @Override
-        protected void onDraw(Canvas canvas) {
+        public void onDraw(Canvas canvas) {
             paint.setARGB(Change.alphaValue, Change.redValue, Change.greenValue, Change.blueValue);
             canvas.drawCircle(MainActivity.screenWidth / 2, MainActivity.screenWidth / 4,
                     MainActivity.screenWidth / 4, paint);
