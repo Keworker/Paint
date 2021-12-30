@@ -26,9 +26,8 @@ public class Change extends Activity
     static float widthValue = 10.0f;
     static int widthPercent = 10, redPercent = 0, greenPercent = 0, bluePercent = 0,
             alphaPercent = 100;
-    Example example;
+    static Example example;
     RadioGroup radio;
-    Canvas canvas = new Canvas();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +59,8 @@ public class Change extends Activity
                 widthPercent = width.getProgress();
                 widthValue = (float) widthPercent;
                 Painter.paint.setStrokeWidth(widthValue);
+                Painter.eraser.setStrokeWidth(widthValue);
+                Painter.eraser.setARGB(255, 255, 255, 255);
                 switch (radio.getCheckedRadioButtonId()) {
                     case R.id.otrezok:{
                         Painter.brushMode = 1;
@@ -86,29 +87,27 @@ public class Change extends Activity
             case R.id.red:{
                 redPercent = red.getProgress();
                 redValue = redPercent * 255 / 100;
-                Painter.paint.setARGB(Painter.paint.getAlpha(), redValue, greenValue, blueValue);
                 break;
             }
             case R.id.green:{
                 greenPercent = green.getProgress();
                 greenValue = greenPercent * 255 / 100;
-                Painter.paint.setARGB(Painter.paint.getAlpha(), redValue, greenValue, blueValue);
                 break;
             }
             case R.id.blue:{
                 bluePercent = blue.getProgress();
                 blueValue = bluePercent * 255 / 100;
-                Painter.paint.setARGB(Painter.paint.getAlpha(), redValue, greenValue, blueValue);
                 break;
             }
             case R.id.alpha:{
                 alphaPercent = alpha.getProgress();
                 alphaValue = alphaPercent * 255 / 100;
-                Painter.paint.setARGB(alphaValue, redValue, greenValue, blueValue);
                 break;
             }
         }
+        Painter.paint.setARGB(alphaValue, redValue, greenValue, blueValue);
         example.paint.setARGB(alphaValue, redValue, greenValue, blueValue);
+        example.invalidate();
     }
 
     @Override
@@ -126,12 +125,13 @@ public class Change extends Activity
 
         public Example(Context context, AttributeSet attributeSet) {
             super(context, attributeSet);
-            paint = new Paint();
+            this.paint = new Paint();
+            example = this;
         }
 
         @Override
         public void onDraw(Canvas canvas) {
-            paint.setARGB(Change.alphaValue, Change.redValue, Change.greenValue, Change.blueValue);
+            this.paint.setARGB(Change.alphaValue, Change.redValue, Change.greenValue, Change.blueValue);
             canvas.drawCircle(MainActivity.screenWidth / 2, MainActivity.screenWidth / 4,
                     MainActivity.screenWidth / 4, paint);
             super.onDraw(canvas);

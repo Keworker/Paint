@@ -5,14 +5,10 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorMatrix;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,20 +16,26 @@ import java.util.List;
 public class Painter extends View  {
     double wight, height;
     static double side;
-    static boolean flag = false, line = false;
+    static boolean flag = false, line = false, brush = true, erase = false, flag0 = true;
     static Paint paint, eraser;
     static int brushMode = 0;
     Bitmap bitmapChange, bitmapCircle, bitmapRect, bitmapTriangle, bitmapEye;
     Actor change, circle, rect, triangle, eye;
-    List<Line> lines = new ArrayList<>();
-    List<Point> points = new ArrayList<>();
+    static List<Line> lines = new ArrayList<>();
+    final Paint systemPaint = new Paint();
+    float pointX, pointY;
 
     public Painter(Context context) {
         super(context);
         wight = MainActivity.screenWidth;
         height = MainActivity.screenHeight;
         side = wight / 5;
-        paint = new Paint();
+        if (flag0) {
+            paint = new Paint();
+            eraser = new Paint();
+            eraser.setARGB(255, 255, 255, 255);
+            flag0 = false;
+        }
         bitmapChange = BitmapFactory.decodeResource(getResources(), R.drawable.without_name);
         bitmapChange = Bitmap.createScaledBitmap(bitmapChange,
                 (int) side, (int) side, true);
@@ -58,27 +60,20 @@ public class Painter extends View  {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (flag) {
-            canvas.drawColor(getResources().getColor(R.color.white));
-            super.onDraw(canvas);
+        Log.d("My", String.valueOf(paint.getStrokeWidth()));
+        canvas.drawColor(getResources().getColor(R.color.white));
+        for (int i = 0; i < lines.size(); i++) {
+            canvas.drawLine(lines.get(i).x1, lines.get(i).y1,
+                    lines.get(i).x2, lines.get(i).y2, lines.get(i).getBrush());
         }
-        else {
-            canvas.drawColor(getResources().getColor(R.color.white));
-            for (int i = 0; i < lines.size(); i++) {
-                canvas.drawLine(lines.get(i).x1, lines.get(i).y1,
-                        lines.get(i).x2, lines.get(i).y2, paint);
-                Log.d("My", "Нарисовал");
-            }
-            for (int i = 0; i < points.size(); i++) {
-                canvas.drawPoint((float) points.get(i).x, (float) points.get(i).y, paint);
-            }
-            canvas.drawBitmap(bitmapChange, 0, 0, paint);
-            canvas.drawBitmap(bitmapCircle, (int) side, 0, paint);
-            canvas.drawBitmap(bitmapRect, (int) side * 2, 0, paint);
-            canvas.drawBitmap(bitmapTriangle, (int) side * 3, 0, paint);
-            canvas.drawBitmap(bitmapEye, (int) side * 4, 0, paint);
-            super.onDraw(canvas);
+        if (!flag) {
+            canvas.drawBitmap(bitmapChange, 0, 0, systemPaint);
+            canvas.drawBitmap(bitmapCircle, (int) side, 0, systemPaint);
+            canvas.drawBitmap(bitmapRect, (int) side * 2, 0, systemPaint);
+            canvas.drawBitmap(bitmapTriangle, (int) side * 3, 0, systemPaint);
+            canvas.drawBitmap(bitmapEye, (int) side * 4, 0, systemPaint);
         }
+        super.onDraw(canvas);
     }
 
     @Override
@@ -108,17 +103,26 @@ public class Painter extends View  {
                     else {
                         switch (brushMode) {
                             case 0:{
+                                pointX = event.getX();
+                                pointY = event.getY();
+                                brush = true;
                                 line = false;
+                                erase = false;
                                 break;
                             }
                             case 1:{
-                                Log.d("My", "Начало линии");
                                 line = true;
+                                brush = false;
+                                erase = false;
                                 lines.add(new Line(event.getX(), event.getY()));
                                 break;
                             }
                             case 2:{
+                                pointX = event.getX();
+                                pointY = event.getY();
+                                erase = true;
                                 line = false;
+                                brush = false;
                                 break;
                             }
                         }
@@ -127,13 +131,46 @@ public class Painter extends View  {
                 break;
             }
             case MotionEvent.ACTION_MOVE:{
-                points.add(new Point((int) event.getX(), (int) event.getY()));
+                if (brush && !(change.bound(event.getX(), event.getY()) ||
+                        rect.bound(event.getX(), event.getY()) ||
+                        circle.bound(event.getX(), event.getY()) ||
+                        triangle.bound(event.getX(), event.getY()) ||
+                        eye.bound(event.getX(), event.getY()))) {
+                    lines.add(new Line(pointX, pointY, event.getX(), event.getY()));
+                    lines.get(lines.size() - 1).setEndXY(event.getX(), event.getY());
+                    lines.get(lines.size() - 1).brush.setColor(paint.getColor());
+                    lines.get(lines.size() - 1).brush.setStrokeWidth(paint.getStrokeWidth());
+                    pointX = event.getX();
+                    pointY = event.getY();
+                    invalidate();
+                }
+                else if (erase && !(change.bound(event.getX(), event.getY()) ||
+                        rect.bound(event.getX(), event.getY()) ||
+                        circle.bound(event.getX(), event.getY()) ||
+                        triangle.bound(event.getX(), event.getY()) ||
+                        eye.bound(event.getX(), event.getY()))) {
+                    lines.add(new Line(pointX, pointY, event.getX(), event.getY()));
+                    lines.get(lines.size() - 1).setEndXY(event.getX(), event.getY());
+                    lines.get(lines.size() - 1).brush.setColor(eraser.getColor());
+                    lines.get(lines.size() - 1).brush.setStrokeWidth(eraser.getStrokeWidth());
+                    pointX = event.getX();
+                    pointY = event.getY();
+                    invalidate();
+                }
+                break;
             }
             case MotionEvent.ACTION_UP:{
-                if (line) {
-                    lines.get(lines.size() - 1).setXY2(event.getX(), event.getY());
-                    Log.d("My", "Конец линии");
+                if (line && !(change.bound(event.getX(), event.getY()) ||
+                        rect.bound(event.getX(), event.getY()) ||
+                        circle.bound(event.getX(), event.getY()) ||
+                        triangle.bound(event.getX(), event.getY()) ||
+                        eye.bound(event.getX(), event.getY()))) {
+                    lines.get(lines.size() - 1).setEndXY(event.getX(), event.getY());
+                    lines.get(lines.size() - 1).brush.setColor(paint.getColor());
+                    lines.get(lines.size() - 1).brush.setStrokeWidth(paint.getStrokeWidth());
+                    invalidate();
                 }
+                break;
             }
         }
         return true;
